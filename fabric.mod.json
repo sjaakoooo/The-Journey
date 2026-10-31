@@ -1,0 +1,45 @@
+{
+	"schemaVersion": 1,
+	"id": "the-journey",
+	"version": "${version}",
+	"name": "The Journey",
+	"description": "A Minecraft mod that adds a configurable recap of your Minecraft stats to the End credits, alongside screenshots from your journey and optional custom credits music.",
+	"authors": [
+		"TwoBit Studios"
+	],
+	"contact": {
+		"homepage": "https://modrinth.com/project/thejourney",
+		"sources": "https://github.com/sjaakoooo/The-Journey"
+	},
+	"license": "All Rights Reserved",
+	"icon": "assets/the-journey/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.thejourney.TheJourney"
+		],
+		"client": [
+			"com.thejourney.client.TheJourneyClient"
+		],
+		"modmenu": [
+			"com.thejourney.client.TheJourneyModMenu"
+		]
+	},
+	"mixins": [
+		"the-journey.mixins.json",
+		{
+			"config": "the-journey.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"recommends": {
+		"modmenu": "*",
+		"cloth-config": "*"
+	}
+}
