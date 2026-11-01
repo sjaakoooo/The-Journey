@@ -3,7 +3,7 @@
 	"id": "the-journey",
 	"version": "${version}",
 	"name": "The Journey",
-	"description": "A Minecraft mod that adds a configurable recap of your Minecraft stats to the End credits, alongside screenshots from your journey and optional custom credits music.",
+	"description": "A cinematic year-in-review for your Minecraft world. Open the recap from the End Credits (arrow on the left) or with the J key: highlights, animated statistics, achievements, play time and photos from your journey. Photos are kept on your computer so you can look back at them, and can be deleted at any time.",
 	"authors": [
 		"TwoBit Studios"
 	],

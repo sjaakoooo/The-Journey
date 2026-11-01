@@ -32,6 +32,7 @@ public final class ShotSlideshow {
     private static Slide current = null;
     private static Slide next = null;
     private static int textureCounter = 0;
+    private static float captionFade = 0.0F;
 
     private record Slide(ResourceLocation id, int width, int height, String caption) {
     }
@@ -92,10 +93,7 @@ public final class ShotSlideshow {
         graphics.fillGradient(0, 0, screenWidth, screenHeight / 4, 0x99000000, 0x00000000);
         graphics.fillGradient(0, screenHeight * 3 / 4, screenWidth, screenHeight, 0x00000000, 0x99000000);
 
-        drawCaption(graphics, current, screenWidth, screenHeight, 1.0F - nextAlpha);
-        if (nextAlpha > 0.0F) {
-            drawCaption(graphics, next, screenWidth, screenHeight, nextAlpha);
-        }
+        captionFade = nextAlpha;
 
         return true;
     }
@@ -135,6 +133,21 @@ public final class ShotSlideshow {
         graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
+    /**
+     * Draws the caption of the current photo ("Your first Crafting Table") in the bottom-left corner,
+     * on its own solid plate and ABOVE the credits text, so it can always be read.
+     * Call this after the credits have been drawn.
+     */
+    public static void renderCaption(GuiGraphics graphics, int screenWidth, int screenHeight) {
+        if (current == null) {
+            return;
+        }
+        drawCaption(graphics, current, screenWidth, screenHeight, 1.0F - captionFade);
+        if (captionFade > 0.0F && next != null) {
+            drawCaption(graphics, next, screenWidth, screenHeight, captionFade);
+        }
+    }
+
     private static void drawCaption(
             GuiGraphics graphics,
             Slide slide,
@@ -147,19 +160,33 @@ public final class ShotSlideshow {
         }
 
         Font font = Minecraft.getInstance().font;
-        Component text = Component.literal(slide.caption());
-        int textWidth = font.width(text);
-        int x = screenWidth / 2;
-        int y = screenHeight - 40;
+        com.thejourney.client.config.JourneyTheme.ThemePalette pal =
+                com.thejourney.client.recap.ThemeBlend.current();
 
-        int a = Math.min(255, Math.round(alpha * 255.0F));
-        int backing = (Math.round(alpha * 150.0F) << 24);
-        int gold = (a << 24) | 0xFFE7B8;
-        int line = (a << 24) | 0xC49A62;
+        // Room to the left of the (centred) credits column, but never less than a readable minimum.
+        int maxWidth = Math.max(110, Math.min(190, (screenWidth - 256) / 2 - 18));
+        java.util.List<String> lines = com.thejourney.client.recap.Fx.wrap(font, slide.caption(), maxWidth, 3);
+        int textWidth = 0;
+        for (String line : lines) {
+            textWidth = Math.max(textWidth, font.width(line));
+        }
 
-        graphics.fill(x - textWidth / 2 - 10, y - 4, x + textWidth / 2 + 10, y + 13, backing);
-        graphics.fill(x - textWidth / 2 - 10, y + 13, x + textWidth / 2 + 10, y + 14, line);
-        graphics.drawCenteredString(font, text, x, y, gold);
+        int plateW = textWidth + 18;
+        int plateH = 16 + lines.size() * 10;
+        int x = 8;
+        int y = screenHeight - plateH - 10;
+
+        float old = com.thejourney.client.recap.Fx.alpha;
+        com.thejourney.client.recap.Fx.alpha = alpha;
+        com.thejourney.client.recap.Fx.glow(graphics, x, y, plateW, plateH, pal.accent(), 0.5F, 2);
+        com.thejourney.client.recap.Fx.panel(graphics, x, y, plateW, plateH,
+                0xF2000000 | (pal.bgTop() & 0xFFFFFF), 0xF2000000 | (pal.bgBottom() & 0xFFFFFF), pal.border());
+        com.thejourney.client.recap.Fx.fill(graphics, x + 1, y + 2, x + 3, y + plateH - 2, pal.accent());
+        com.thejourney.client.recap.Fx.textScaled(graphics, font, "FROM YOUR JOURNEY", x + 9, y + 4, pal.accent(), 0.75F, false);
+        for (int i = 0; i < lines.size(); i++) {
+            com.thejourney.client.recap.Fx.text(graphics, font, lines.get(i), x + 9, y + 13 + i * 10, pal.title());
+        }
+        com.thejourney.client.recap.Fx.alpha = old;
     }
 
     private static void start() {

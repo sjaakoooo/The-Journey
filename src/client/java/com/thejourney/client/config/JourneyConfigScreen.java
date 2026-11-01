@@ -17,6 +17,8 @@ public class JourneyConfigScreen {
 
         ConfigCategory general =
                 builder.getOrCreateCategory(Component.literal("General"));
+        ConfigCategory experience =
+                builder.getOrCreateCategory(Component.literal("Recap experience"));
         ConfigCategory exploration =
                 builder.getOrCreateCategory(Component.literal("Exploration"));
         ConfigCategory mining =
@@ -60,8 +62,19 @@ public class JourneyConfigScreen {
                 .setDefaultValue(true)
                 .setTooltip(
                         Component.literal("Takes a photo of the game view at moments like your first Crafting Table or"),
-                        Component.literal("entering the Nether. They are kept until the End Credits close, then deleted."))
+                        Component.literal("entering the Nether. Kept for the recap; see \"Keep photos after the credits\"."))
                 .setSaveConsumer(value -> config.captureMilestones = value)
+                .build());
+
+        general.addEntry(entries.startBooleanToggle(
+                        Component.literal("Keep photos after the credits"),
+                        config.keepPhotos)
+                .setDefaultValue(true)
+                .setTooltip(
+                        Component.literal("Keeps your milestone photos and moment clips so you can view them again"),
+                        Component.literal("in the recap (J key). Off = they are deleted when the credits close."),
+                        Component.literal("Only on this computer, nothing is uploaded. Can also be deleted from the recap settings."))
+                .setSaveConsumer(value -> config.keepPhotos = value)
                 .build());
 
         general.addEntry(entries.startBooleanToggle(
@@ -77,7 +90,7 @@ public class JourneyConfigScreen {
                         Component.literal("Recap theme"),
                         JourneyTheme.class,
                         config.theme)
-                .setDefaultValue(JourneyTheme.WOOD)
+                .setDefaultValue(JourneyTheme.END_PORTAL)
                 .setSaveConsumer(value -> config.theme = value)
                 .build());
 
@@ -100,6 +113,79 @@ public class JourneyConfigScreen {
                         config.showLeaders)
                 .setDefaultValue(true)
                 .setSaveConsumer(value -> config.showLeaders = value)
+                .build());
+
+
+        experience.addEntry(entries.startBooleanToggle(
+                        Component.literal("Animations"),
+                        config.animations)
+                .setDefaultValue(true)
+                .setTooltip(Component.literal("Turn off for an instant, static recap."))
+                .setSaveConsumer(value -> config.animations = value)
+                .build());
+
+        experience.addEntry(entries.startIntSlider(
+                        Component.literal("Animation speed (%)"),
+                        config.animationSpeed, 50, 200)
+                .setDefaultValue(100)
+                .setSaveConsumer(value -> config.animationSpeed = value)
+                .build());
+
+        experience.addEntry(entries.startEnumSelector(
+                        Component.literal("Reveal style"),
+                        JourneyConfig.RevealStyle.class,
+                        config.revealStyle)
+                .setDefaultValue(JourneyConfig.RevealStyle.CINEMATIC)
+                .setSaveConsumer(value -> config.revealStyle = value)
+                .build());
+
+        experience.addEntry(entries.startBooleanToggle(
+                        Component.literal("Particles"),
+                        config.particles)
+                .setDefaultValue(true)
+                .setSaveConsumer(value -> config.particles = value)
+                .build());
+
+        experience.addEntry(entries.startBooleanToggle(
+                        Component.literal("Sound effects"),
+                        config.soundEffects)
+                .setDefaultValue(true)
+                .setSaveConsumer(value -> config.soundEffects = value)
+                .build());
+
+        experience.addEntry(entries.startIntSlider(
+                        Component.literal("Sound volume (%)"),
+                        config.soundVolume, 0, 100)
+                .setDefaultValue(70)
+                .setSaveConsumer(value -> config.soundVolume = value)
+                .build());
+
+        experience.addEntry(entries.startBooleanToggle(
+                        Component.literal("Background music (recap screen)"),
+                        config.backgroundMusic)
+                .setDefaultValue(false)
+                .setTooltip(
+                        Component.literal("Loops music while the standalone recap screen is open."),
+                        Component.literal("The End Credits keep using their own music."))
+                .setSaveConsumer(value -> config.backgroundMusic = value)
+                .build());
+
+        experience.addEntry(entries.startBooleanToggle(
+                        Component.literal("Hide empty statistics"),
+                        config.hideEmptyStats)
+                .setDefaultValue(true)
+                .setSaveConsumer(value -> config.hideEmptyStats = value)
+                .build());
+
+        experience.addEntry(entries.startBooleanToggle(
+                        Component.literal("Short moment clips"),
+                        config.captureClips)
+                .setDefaultValue(true)
+                .setTooltip(
+                        Component.literal("Captures about 3 seconds of frames right after a big moment"),
+                        Component.literal("(first death, Wither, Ender Dragon). This is a frame sequence, not a video,"),
+                        Component.literal("and only exists if it was recorded while you played."))
+                .setSaveConsumer(value -> config.captureClips = value)
                 .build());
 
         toggle(exploration, entries, "Distance traveled", config.showDistance, value -> config.showDistance = value);

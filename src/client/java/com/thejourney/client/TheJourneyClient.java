@@ -68,18 +68,21 @@ public class TheJourneyClient implements ClientModInitializer {
     public void onInitializeClient() {
         JourneyConfig.load();
         EndShots.init();
+        com.thejourney.client.recap.SessionLog.init();
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
             if (screen instanceof WinScreen) {
+                // Wheel: scrolls the recap menu when the mouse is over it, otherwise the credits as usual.
                 ScreenMouseEvents.allowMouseScroll(screen).register(
-                        (currentScreen, mouseX, mouseY, horizontalAmount, verticalAmount) -> {
-                            if (!JourneyConfig.get().showRecapInCredits) {
-                                return true;
-                            }
+                        (currentScreen, mouseX, mouseY, horizontalAmount, verticalAmount) ->
+                                !(JourneyConfig.get().showRecapInCredits
+                                        && CreditsMenu.mouseScrolled(mouseX, mouseY, verticalAmount))
+                );
 
-                            JourneyScreen.scrollCreditCards(verticalAmount);
-
-                            return false;
-                        }
+                // Clicks on the arrow tab or inside the recap menu.
+                ScreenMouseEvents.allowMouseClick(screen).register(
+                        (currentScreen, mouseX, mouseY, button) ->
+                                !(JourneyConfig.get().showRecapInCredits
+                                        && CreditsMenu.mouseClicked(mouseX, mouseY, button))
                 );
             }
             if (screen instanceof PauseScreen) {

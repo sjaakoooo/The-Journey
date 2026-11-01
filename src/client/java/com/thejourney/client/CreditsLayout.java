@@ -1,75 +1,59 @@
 package com.thejourney.client;
 
 /**
- * One place that decides how the End Credits screen is divided:
- * on the left the recap (logo + panel, centered together in their column),
- * on the right the normal credits (centered in their own column).
+ * One place that decides how the End Credits screen is divided.
+ * <p>
+ * Collapsed: the credits are centred, like in the normal game.
+ * Expanded on a wide screen: the recap takes the left side and the credits glide to the middle of
+ * the remaining right side, so they stay fully readable.
+ * Expanded on a narrow screen: there is no room for both, so the recap is drawn over the (dimmed) credits.
  */
 public final class CreditsLayout {
-    /** Vanilla breekt credits-regels af op 256 breed. */
-    private static final int CREDITS_TEXT_WIDTH = 256;
-    private static final int COLUMN_MARGIN = 14;
-    private static final int MAX_PANEL_WIDTH = 380;
-    private static final int MAX_LOGO_WIDTH = 240;
-    private static final int LOGO_TOP = 10;
+    private static final int SPLIT_MIN_SCREEN_WIDTH = 620;
+    private static final int TAB_WIDTH = 14;
 
     private CreditsLayout() {
     }
 
-    public record Layout(
-            int logoX,
-            int logoY,
-            int logoWidth,
-            int logoHeight,
-            int panelX,
-            int panelY,
-            int panelWidth,
-            int panelHeight,
-            int creditsShift,
-            int creditsColumnCenterX,
-            int dividerX
-    ) {
+    public record Panel(int x, int y, int w, int h) {
     }
 
-    /** Width of the column with the normal credits. */
-    private static int creditsColumnWidth(int screenWidth) {
-        return Math.min(CREDITS_TEXT_WIDTH + COLUMN_MARGIN * 2, screenWidth * 6 / 10);
+    /** True when the recap has to cover the credits because the screen is too narrow for both. */
+    public static boolean overlay(int screenWidth) {
+        return screenWidth < SPLIT_MIN_SCREEN_WIDTH;
+    }
+
+    /** Width of the left column (recap) in split mode. */
+    public static int columnWidth(int screenWidth) {
+        return Math.max(300, Math.min(520, screenWidth / 2));
+    }
+
+    public static int tabWidth() {
+        return TAB_WIDTH;
+    }
+
+    public static Panel panel(int screenWidth, int screenHeight) {
+        int y = 8;
+        int h = Math.max(120, screenHeight - 16);
+
+        if (overlay(screenWidth)) {
+            // Leave room on the right for the arrow tab.
+            int w = Math.max(200, Math.min(430, screenWidth - 8 - TAB_WIDTH - 6));
+            return new Panel(8, y, w, h);
+        }
+
+        int column = columnWidth(screenWidth);
+        return new Panel(8, y, column - 12, h);
     }
 
     /**
-     * How far the normal credits must move to the right so that they are exactly
-     * in the middle of their column (vanilla centers on width / 2).
+     * How far the normal credits are moved to the right. Vanilla centres them on width / 2;
+     * moving by half a column centres them in the space that is left over.
      */
-    public static int creditsShift(int screenWidth) {
-        return (screenWidth - creditsColumnWidth(screenWidth)) / 2;
-    }
-
-    public static Layout compute(int screenWidth, int screenHeight) {
-        int creditsColumn = creditsColumnWidth(screenWidth);
-        int recapColumn = screenWidth - creditsColumn;
-
-        int panelWidth = Math.max(90, Math.min(MAX_PANEL_WIDTH, recapColumn - COLUMN_MARGIN * 2));
-        int panelX = (recapColumn - panelWidth) / 2;
-
-        int logoWidth = Math.max(60, Math.min(MAX_LOGO_WIDTH, panelWidth - 16));
-        int logoHeight = logoWidth / 4;
-        int logoX = (recapColumn - logoWidth) / 2;
-
-        int panelY = LOGO_TOP + logoHeight + 6;
-        int panelHeight = Math.max(40, screenHeight - panelY - 12);
-
-        return new Layout(
-                logoX,
-                LOGO_TOP,
-                logoWidth,
-                logoHeight,
-                panelX,
-                panelY,
-                panelWidth,
-                panelHeight,
-                creditsShift(screenWidth),
-                recapColumn + creditsColumn / 2,
-                recapColumn
-        );
+    public static int creditsShift(int screenWidth, float eased) {
+        if (overlay(screenWidth)) {
+            return 0;
+        }
+        return Math.round(columnWidth(screenWidth) / 2.0F * eased);
     }
 }

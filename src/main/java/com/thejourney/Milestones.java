@@ -38,6 +38,7 @@ public final class Milestones {
         CAPTIONS.put("beacon", "Building a Beacon");
         CAPTIONS.put("wither", "Defeating the Wither");
         CAPTIONS.put("end", "Entering the End");
+        CAPTIONS.put("dragon", "Defeating the Ender Dragon");
         CAPTIONS.put("elytra", "Finding Elytra");
     }
 
@@ -114,6 +115,7 @@ public final class Milestones {
             case "beacon" -> advancementDone(player, "nether/create_beacon");
             case "wither" -> stats.getValue(Stats.ENTITY_KILLED, EntityType.WITHER) > 0;
             case "end" -> advancementDone(player, "story/enter_the_end");
+            case "dragon" -> stats.getValue(Stats.ENTITY_KILLED, EntityType.ENDER_DRAGON) > 0;
             case "elytra" -> advancementDone(player, "end/elytra");
             default -> false;
         };

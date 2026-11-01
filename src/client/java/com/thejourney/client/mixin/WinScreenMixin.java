@@ -1,20 +1,24 @@
 package com.thejourney.client.mixin;
 
 import com.thejourney.JourneyRecapPayload;
-import com.thejourney.client.CreditsLayout;
+import com.thejourney.client.CreditsMenu;
 import com.thejourney.client.JourneyScreen;
+import com.thejourney.client.recap.Gallery;
 import com.thejourney.client.shots.CreditsMusic;
 import com.thejourney.client.shots.EndShots;
 import com.thejourney.client.shots.ShotSlideshow;
 import com.thejourney.client.config.JourneyConfig;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LogoRenderer;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.WinScreen;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.Music;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -29,6 +33,12 @@ public abstract class WinScreenMixin {
                     "the-journey",
                     "textures/gui/journey_credits_logo.png"
             );
+
+    @Shadow
+    private float scroll;
+
+    @Shadow
+    private int totalScrollLength;
 
     /*
      * Replace the default credits background with the screenshots taken in the End.
@@ -54,12 +64,19 @@ public abstract class WinScreenMixin {
     }
 
     /*
-     * As soon as the credits are really finished (or aborted): delete all screenshots.
+     * As soon as the credits are really finished (or aborted): free the pictures, and delete them unless the player keeps them.
      */
     @Inject(method = "onClose", at = @At("HEAD"))
     private void theJourney$deleteShots(CallbackInfo info) {
         ShotSlideshow.release();
-        EndShots.deleteEverythingForWorld();
+        Gallery.release();
+        CreditsMenu.reset();
+        if (JourneyConfig.get().keepPhotos) {
+            // Milestone photos and clips stay for the recap; only the bulk background shots go.
+            EndShots.deleteEndShots();
+        } else {
+            EndShots.deleteEverythingForWorld();
+        }
     }
 
     /*
@@ -78,11 +95,15 @@ public abstract class WinScreenMixin {
         Minecraft client = Minecraft.getInstance();
 
         if (client.player != null && JourneyConfig.get().showRecapInCredits) {
+            CreditsMenu.attach(this);
             JourneyScreen.setRecapText("Loading the latest recap...");
             ClientPlayNetworking.send(new JourneyRecapPayload("request"));
         }
     }
 
+    /*
+     * The recap menu and its arrow tab are drawn on top of the credits.
+     */
     @Inject(method = "render", at = @At("TAIL"))
     private void theJourney$renderRecap(
             GuiGraphics graphics,
@@ -91,53 +112,38 @@ public abstract class WinScreenMixin {
             float partialTick,
             CallbackInfo info
     ) {
+        Minecraft client = Minecraft.getInstance();
+        if (!CreditsMenu.holdCredits()) {
+            ShotSlideshow.renderCaption(graphics,
+                    client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight());
+        }
+
         if (!JourneyConfig.get().showRecapInCredits) {
             return;
         }
 
-        Minecraft client = Minecraft.getInstance();
-        int screenWidth = client.getWindow().getGuiScaledWidth();
-        int screenHeight = client.getWindow().getGuiScaledHeight();
-
-        CreditsLayout.Layout layout = CreditsLayout.compute(screenWidth, screenHeight);
-
-        // Logo and recap panel share the same center (the left column).
-        graphics.blit(
-                THE_JOURNEY_LOGO,
-                layout.logoX(),
-                layout.logoY(),
-                layout.logoWidth(),
-                layout.logoHeight(),
-                0.0F,
-                0.0F,
-                1024,
-                256,
-                1024,
-                256
-        );
-
-        JourneyScreen.renderCreditCards(
-                graphics,
-                layout.panelX(),
-                layout.panelY(),
-                layout.panelWidth(),
-                layout.panelHeight()
-        );
-
-        // Thin divider between recap and credits, fading out at both ends.
-        int themeRgb = JourneyConfig.get().theme.palette().border() & 0x00FFFFFF;
-        int dividerTop = 10;
-        int dividerBottom = screenHeight - 10;
-        int dividerMid = (dividerTop + dividerBottom) / 2;
-        graphics.fillGradient(layout.dividerX(), dividerTop, layout.dividerX() + 1, dividerMid,
-                0x00000000 | themeRgb, 0xAA000000 | themeRgb);
-        graphics.fillGradient(layout.dividerX(), dividerMid, layout.dividerX() + 1, dividerBottom,
-                0xAA000000 | themeRgb, 0x00000000 | themeRgb);
+        CreditsMenu.render(graphics, mouseX, mouseY);
     }
 
     /*
-     * Hide the vanilla Minecraft logo only while our recap is on screen.
-     * Without the recap the normal logo is drawn as usual.
+     * While the recap menu is open, the credits wait at their very end instead of closing,
+     * so nobody is thrown out of the recap halfway through reading it.
+     */
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void theJourney$holdCreditsAtEnd(CallbackInfo info) {
+        if (!JourneyConfig.get().showRecapInCredits || !CreditsMenu.holdCredits()) {
+            return;
+        }
+
+        float limit = totalScrollLength + ((Screen) (Object) this).height * 2 + 24 - 4;
+        if (scroll > limit) {
+            scroll = limit;
+        }
+    }
+
+    /*
+     * The Journey logo takes the place of the vanilla Minecraft logo and scrolls with the
+     * credits, always centred above them. Without the recap the normal logo is drawn as usual.
      */
     @Redirect(
             method = "render",
@@ -155,7 +161,24 @@ public abstract class WinScreenMixin {
     ) {
         if (!JourneyConfig.get().showRecapInCredits) {
             logoRenderer.renderLogo(graphics, originalWidth, alpha, y);
+            return;
         }
+
+        int logoWidth = Math.min(240, Math.max(120, originalWidth - 40));
+        int logoHeight = logoWidth / 4;
+        int centerX = originalWidth / 2 + CreditsMenu.creditsShift(originalWidth);
+
+        RenderSystem.enableBlend();
+        graphics.setColor(1.0F, 1.0F, 1.0F, alpha);
+        graphics.blit(
+                THE_JOURNEY_LOGO,
+                centerX - logoWidth / 2,
+                y + 4,
+                logoWidth,
+                logoHeight,
+                0.0F, 0.0F, 1024, 256, 1024, 256
+        );
+        graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     @ModifyArg(
@@ -172,7 +195,7 @@ public abstract class WinScreenMixin {
         }
 
         int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        return originalX + CreditsLayout.creditsShift(screenWidth);
+        return originalX + CreditsMenu.creditsShift(screenWidth);
     }
 
     @ModifyArg(
@@ -189,6 +212,6 @@ public abstract class WinScreenMixin {
         }
 
         int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        return originalX + CreditsLayout.creditsShift(screenWidth);
+        return originalX + CreditsMenu.creditsShift(screenWidth);
     }
 }

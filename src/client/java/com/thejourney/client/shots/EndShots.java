@@ -56,6 +56,19 @@ public final class EndShots {
     private static boolean pendingEndShot = false;
     private static volatile String pendingMilestone = null;
 
+    // Short "moment clips": a few frames right AFTER a big moment (not video, nothing historical).
+    private static final java.util.Set<String> CLIP_MOMENTS = java.util.Set.of("death", "wither", "dragon");
+    private static final int CLIP_FRAMES = 12;
+    private static final long CLIP_INTERVAL_MS = 250;
+    private static final int CLIP_WIDTH = 480;
+    private static String clipId = null;
+    private static int clipFrame = 0;
+    private static long clipNextAt = 0;
+
+    /** A recorded sequence of frames for one moment. */
+    public record Clip(String id, String caption, List<Path> frames) {
+    }
+
     /** One picture for the credits, with an optional caption. */
     public record Entry(Path path, String caption) {
     }
@@ -69,7 +82,7 @@ public final class EndShots {
         return FabricLoader.getInstance().getGameDir().resolve("the-journey-temp");
     }
 
-    private static String worldKey() {
+    public static String worldKey() {
         Minecraft client = Minecraft.getInstance();
         String raw = "unknown";
 
@@ -107,6 +120,12 @@ public final class EndShots {
     public static void requestMilestone(String id) {
         if (JourneyConfig.get().captureMilestones && Milestones.CAPTIONS.containsKey(id)) {
             pendingMilestone = id;
+
+            if (JourneyConfig.get().captureClips && CLIP_MOMENTS.contains(id)) {
+                clipId = id;
+                clipFrame = 0;
+                clipNextAt = 0;
+            }
         }
     }
 
@@ -149,6 +168,8 @@ public final class EndShots {
             captureMilestone(client, milestone);
         }
 
+        captureClipFrame(client);
+
         if (!pendingEndShot) {
             return;
         }
@@ -185,6 +206,62 @@ public final class EndShots {
 
         Path target = worldDir().resolve("milestones").resolve("milestone_" + id + ".png");
         IO.execute(() -> write(full, target, MILESTONE_WIDTH));
+    }
+
+    /** One frame of the clip that started at the last big moment, every 250 ms for ~3 seconds. */
+    private static void captureClipFrame(Minecraft client) {
+        if (clipId == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now < clipNextAt) {
+            return;
+        }
+
+        NativeImage full = take(client);
+        if (full == null) {
+            clipId = null;
+            return;
+        }
+
+        Path target = worldDir().resolve("clips").resolve(clipId).resolve(
+                String.format(Locale.ROOT, "f_%02d.png", clipFrame));
+        IO.execute(() -> write(full, target, CLIP_WIDTH));
+
+        clipFrame++;
+        clipNextAt = now + CLIP_INTERVAL_MS;
+        if (clipFrame >= CLIP_FRAMES) {
+            clipId = null;
+        }
+    }
+
+    /** Photo file for a milestone id, or null when none was taken. */
+    public static Path milestoneFile(String id) {
+        Path file = worldDir().resolve("milestones").resolve("milestone_" + id + ".png");
+        return Files.isRegularFile(file) ? file : null;
+    }
+
+    /** Clips that were actually recorded while playing (usually none for old worlds). */
+    public static List<Clip> listClips() {
+        List<Clip> result = new ArrayList<>();
+        Path root = worldDir().resolve("clips");
+
+        for (String id : Milestones.CAPTIONS.keySet()) {
+            Path dir = root.resolve(id);
+            if (!Files.isDirectory(dir)) {
+                continue;
+            }
+            try (Stream<Path> stream = Files.list(dir)) {
+                List<Path> frames = stream.filter(path -> path.getFileName().toString().startsWith("f_"))
+                        .sorted(Comparator.comparing(Path::toString)).toList();
+                if (frames.size() >= 3) {
+                    result.add(new Clip(id, Milestones.CAPTIONS.get(id), frames));
+                }
+            } catch (IOException ignored) {
+                // No clip then.
+            }
+        }
+        return result;
     }
 
     private static NativeImage take(Minecraft client) {
@@ -282,9 +359,15 @@ public final class EndShots {
         });
     }
 
+    /** Deletes every photo and clip of the current world (the "Delete photos" button). */
+    public static void deletePhotosNow() {
+        deleteEverythingForWorld();
+    }
+
     /** Credits are over: delete everything saved for the current world. */
     public static void deleteEverythingForWorld() {
         pendingMilestone = null;
+        clipId = null;
         Path world = worldDir();
 
         deleteEndShots();

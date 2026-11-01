@@ -1,26 +1,43 @@
 # The Journey
 
-The End credits mark the end of the dragon fight, but they don't have to be the end of your story. **The Journey** adds a personal recap of your Minecraft world to the End credits, showing stats and images from your adventure alongside the rolling credits.
+A Fabric mod (Minecraft 1.21.1) that adds a cinematic "Year in Review" recap to the End Credits
+and to a stand-alone screen (default key: J).
 
-## Features
+## Recap experience
 
-- View a configurable selection of stats, such as distance traveled, play time, jumps, blocks mined, mobs killed, and deaths.
-- Scroll through the recap to see more of your stats.
-- View images from your journey during the End credits.
-- Use optional custom music for the credits.
-- Change which supported stats appear in the recap through the mod's configuration.
+* **End Credits**: a small arrow tab on the left opens the recap menu. The credits stay readable
+  (they glide to the free side on wide screens; on narrow screens the menu covers them, dimmed).
+  The credits wait at their end while the menu is open.
+* **Pages**: Highlights, Stats, Photos, Achievements, Playtime, Settings (gear icon) and a final screen.
+* **Export**: "Export image" saves a clean poster to the `screenshots` folder.
+* **Themes / animations / audio**: all in the in-recap settings and in the Cloth Config screen
+  ("Recap experience"). Everything is saved in `config/the-journey.json`.
 
-## Screenshots and privacy
+## What is real data
 
-The Journey captures small screenshots on your client while you play. They are stored locally in the `the-journey-temp` folder inside your Minecraft game directory. **The screenshots are not uploaded or sent to a server.** The mod does send stats and milestone messages between the client and server so the recap can work, but it does not send the images.
+* Statistics: Minecraft's own player statistics.
+* Moments (first diamond, Nether, End, dragon) and achievements: dates from the player's advancement progress.
+* "Longest session": measured by the mod itself since it was installed (`config/the-journey-sessions.json`).
+* Photos: taken at milestones while playing. Nothing is invented; sections with no data are hidden or say so.
 
-The mod keeps up to 300 End screenshots at a time. Once that limit is reached, a new End screenshot replaces one of the existing End screenshots. End screenshots are deleted when you leave the world or close the game. All temporary screenshots for that world are deleted when you close the End credits. Copy any screenshots you want to keep to another folder before they are deleted.
+## Video
 
-## Requirements
+Minecraft keeps no gameplay footage and real video needs an encoder (extra dependency), so there is no video.
+Instead, with "Short moment clips" on, about 3 seconds of frames (4 per second) are recorded right *after*
+a first death, Wither or Ender Dragon kill, and played back as a short flip-book. Clips only exist if they
+were recorded while playing, and are kept or deleted together with the other photos (see below).
 
-- Minecraft **1.21.1**
-- **Fabric**
-- Install The Journey on both the client and server for multiplayer. In singleplayer, both sides run together locally.
-- Fabric API is required. Mod Menu and Cloth Config are recommended for the configuration screen.
+## Setup
 
-**The Journey is currently in beta.** Features, settings, and the interface may change. Please report bugs or share feedback so the mod can improve.
+See the [Fabric Documentation](https://docs.fabricmc.net/develop/getting-started/creating-a-project#setting-up).
+
+## License
+
+This template is available under the CC0 license.
+
+## Photos
+
+Milestone photos and moment clips stay on this computer (`the-journey-temp/<world>`) so you can look at them
+again with the J key. Turn off "Keep photos after the credits" and they are deleted when the credits close.
+"Delete saved photos now" in the recap settings removes them at any time. The many small background
+screenshots taken in the End are always deleted after the credits.

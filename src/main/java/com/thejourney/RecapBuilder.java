@@ -88,78 +88,135 @@ public final class RecapBuilder {
 
         long fallCm = custom(stats, Stats.FALL_ONE_CM);
         if (fallCm > 0) {
-            rows.add(row("hl_fall", "highlights", "Distance fallen", distance(fallCm)));
+            rows.add(drow("hl_fall", "highlights", "Distance fallen", fallCm));
         }
 
         // ---- Exploration ----
-        rows.add(row("distance", "exploration", "Distance traveled", distance(totalDistanceCm(stats))));
-        rows.add(row("ridden", "exploration", "Distance ridden", distance(rideCm)));
-        rows.add(row("elytra", "exploration", "Flown with elytra", distance(custom(stats, Stats.AVIATE_ONE_CM))));
-        rows.add(row("swum", "exploration", "Distance swum", distance(custom(stats, Stats.SWIM_ONE_CM))));
-        rows.add(row("play_time", "exploration", "Play time", duration(custom(stats, Stats.PLAY_TIME))));
-        rows.add(row("days", "exploration", "Days passed", number(custom(stats, Stats.TOTAL_WORLD_TIME) / TICKS_PER_DAY)));
-        rows.add(row("sleeps", "exploration", "Nights slept", number(custom(stats, Stats.SLEEP_IN_BED))));
-        rows.add(row("jumps", "exploration", "Jumps", number(custom(stats, Stats.JUMP))));
+        rows.add(drow("distance", "exploration", "Distance traveled", totalDistanceCm(stats)));
+        rows.add(drow("ridden", "exploration", "Distance ridden", rideCm));
+        rows.add(drow("elytra", "exploration", "Flown with elytra", custom(stats, Stats.AVIATE_ONE_CM)));
+        rows.add(drow("swum", "exploration", "Distance swum", custom(stats, Stats.SWIM_ONE_CM)));
+        rows.add(trow("play_time", "exploration", "Play time", custom(stats, Stats.PLAY_TIME)));
+        rows.add(nrow("days", "exploration", "Days passed", custom(stats, Stats.TOTAL_WORLD_TIME) / TICKS_PER_DAY));
+        rows.add(nrow("sleeps", "exploration", "Nights slept", custom(stats, Stats.SLEEP_IN_BED)));
+        rows.add(nrow("jumps", "exploration", "Jumps", custom(stats, Stats.JUMP)));
 
         // ---- Mining ----
-        rows.add(row("blocks_mined", "mining", "Blocks mined", number(scan.blocksMined)));
-        rows.add(row("ores_mined", "mining", "Ores mined", number(scan.oresMined)));
-        rows.add(row("diamonds_mined", "mining", "Diamonds mined", number(scan.diamondsMined)));
-        rows.add(row("logs_chopped", "mining", "Logs chopped", number(scan.logsChopped)));
-        rows.add(row("blocks_placed", "mining", "Blocks placed", number(scan.blocksPlaced)));
-        rows.add(row("items_crafted", "mining", "Items crafted", number(scan.itemsCrafted)));
-        rows.add(row("tools_broken", "mining", "Tools broken", number(scan.toolsBroken)));
+        rows.add(nrow("blocks_mined", "mining", "Blocks mined", scan.blocksMined));
+        rows.add(nrow("ores_mined", "mining", "Ores mined", scan.oresMined));
+        rows.add(nrow("diamonds_mined", "mining", "Diamonds mined", scan.diamondsMined));
+        rows.add(nrow("logs_chopped", "mining", "Logs chopped", scan.logsChopped));
+        rows.add(nrow("blocks_placed", "mining", "Blocks placed", scan.blocksPlaced));
+        rows.add(nrow("items_crafted", "mining", "Items crafted", scan.itemsCrafted));
+        rows.add(nrow("tools_broken", "mining", "Tools broken", scan.toolsBroken));
 
         // ---- Combat ----
         long shots = stats.getValue(Stats.ITEM_USED, Items.BOW)
                 + stats.getValue(Stats.ITEM_USED, Items.CROSSBOW);
 
-        rows.add(row("mobs_killed", "combat", "Mobs killed", number(custom(stats, Stats.MOB_KILLS))));
-        rows.add(row("deaths", "combat", "Deaths", number(custom(stats, Stats.DEATHS))));
-        rows.add(row("ender_dragon_kills", "combat", "Ender Dragons defeated", number(dragons)));
-        rows.add(row("player_kills", "combat", "Players defeated", number(custom(stats, Stats.PLAYER_KILLS))));
-        rows.add(row("creepers_killed", "combat", "Creepers killed",
-                number(stats.getValue(Stats.ENTITY_KILLED, EntityType.CREEPER))));
-        rows.add(row("endermen_killed", "combat", "Endermen killed",
-                number(stats.getValue(Stats.ENTITY_KILLED, EntityType.ENDERMAN))));
-        rows.add(row("withers_killed", "combat", "Withers defeated",
-                number(stats.getValue(Stats.ENTITY_KILLED, EntityType.WITHER))));
+        rows.add(nrow("mobs_killed", "combat", "Mobs killed", custom(stats, Stats.MOB_KILLS)));
+        rows.add(nrow("deaths", "combat", "Deaths", custom(stats, Stats.DEATHS)));
+        rows.add(nrow("ender_dragon_kills", "combat", "Ender Dragons defeated", dragons));
+        rows.add(nrow("player_kills", "combat", "Players defeated", custom(stats, Stats.PLAYER_KILLS)));
+        rows.add(nrow("creepers_killed", "combat", "Creepers killed", stats.getValue(Stats.ENTITY_KILLED, EntityType.CREEPER)));
+        rows.add(nrow("endermen_killed", "combat", "Endermen killed", stats.getValue(Stats.ENTITY_KILLED, EntityType.ENDERMAN)));
+        rows.add(nrow("withers_killed", "combat", "Withers defeated", stats.getValue(Stats.ENTITY_KILLED, EntityType.WITHER)));
         // Minecraft stores damage in tenths.
-        rows.add(row("damage_dealt", "combat", "Damage dealt", number(custom(stats, Stats.DAMAGE_DEALT) / 10)));
-        rows.add(row("damage_taken", "combat", "Damage taken", number(custom(stats, Stats.DAMAGE_TAKEN) / 10)));
-        rows.add(row("shots_fired", "combat", "Arrows shot", number(shots)));
-        rows.add(row("raids_won", "combat", "Raids won", number(custom(stats, Stats.RAID_WIN))));
-        rows.add(row("alive_for", "combat", "Alive for", duration(custom(stats, Stats.TIME_SINCE_DEATH))));
+        rows.add(nrow("damage_dealt", "combat", "Damage dealt", custom(stats, Stats.DAMAGE_DEALT) / 10));
+        rows.add(nrow("damage_taken", "combat", "Damage taken", custom(stats, Stats.DAMAGE_TAKEN) / 10));
+        rows.add(nrow("shots_fired", "combat", "Arrows shot", shots));
+        rows.add(nrow("raids_won", "combat", "Raids won", custom(stats, Stats.RAID_WIN)));
+        rows.add(trow("alive_for", "combat", "Alive for", custom(stats, Stats.TIME_SINCE_DEATH)));
 
         // ---- World ----
-        rows.add(row("animals_bred", "world", "Animals bred", number(custom(stats, Stats.ANIMALS_BRED))));
-        rows.add(row("fish_caught", "world", "Fish caught", number(custom(stats, Stats.FISH_CAUGHT))));
-        rows.add(row("chests_opened", "world", "Chests opened", number(custom(stats, Stats.OPEN_CHEST))));
-        rows.add(row("villager_trades", "world", "Villager trades", number(custom(stats, Stats.TRADED_WITH_VILLAGER))));
-        rows.add(row("items_enchanted", "world", "Items enchanted", number(custom(stats, Stats.ENCHANT_ITEM))));
-        rows.add(row("food_eaten", "world", "Food eaten", number(scan.foodEaten)));
-        rows.add(row("advancements", "world", "Advancements", advancements(player)));
-        rows.add(row("cakes_eaten", "world", "Cake slices eaten", number(custom(stats, Stats.EAT_CAKE_SLICE))));
-        rows.add(row("bells_rung", "world", "Bells rung", number(custom(stats, Stats.BELL_RING))));
-        rows.add(row("flowers_potted", "world", "Flowers potted", number(custom(stats, Stats.POT_FLOWER))));
+        rows.add(nrow("animals_bred", "world", "Animals bred", custom(stats, Stats.ANIMALS_BRED)));
+        rows.add(nrow("fish_caught", "world", "Fish caught", custom(stats, Stats.FISH_CAUGHT)));
+        rows.add(nrow("chests_opened", "world", "Chests opened", custom(stats, Stats.OPEN_CHEST)));
+        rows.add(nrow("villager_trades", "world", "Villager trades", custom(stats, Stats.TRADED_WITH_VILLAGER)));
+        rows.add(nrow("items_enchanted", "world", "Items enchanted", custom(stats, Stats.ENCHANT_ITEM)));
+        rows.add(nrow("food_eaten", "world", "Food eaten", scan.foodEaten));
+        rows.add(advancementsRow(player));
+        rows.add(nrow("cakes_eaten", "world", "Cake slices eaten", custom(stats, Stats.EAT_CAKE_SLICE)));
+        rows.add(nrow("bells_rung", "world", "Bells rung", custom(stats, Stats.BELL_RING)));
+        rows.add(nrow("flowers_potted", "world", "Flowers potted", custom(stats, Stats.POT_FLOWER)));
 
         // ---- This session ----
         SessionTracker.Totals now = totals(stats, scan);
         SessionTracker.Totals start = SessionTracker.baseline(player.getUUID(), now);
 
-        rows.add(row("s_play_time", "session", "Play time", duration(now.playTicks() - start.playTicks())));
-        rows.add(row("s_distance", "session", "Distance traveled", distance(now.distanceCm() - start.distanceCm())));
-        rows.add(row("s_blocks_mined", "session", "Blocks mined", number(now.blocksMined() - start.blocksMined())));
-        rows.add(row("s_blocks_placed", "session", "Blocks placed", number(now.blocksPlaced() - start.blocksPlaced())));
-        rows.add(row("s_items_crafted", "session", "Items crafted", number(now.itemsCrafted() - start.itemsCrafted())));
-        rows.add(row("s_mobs_killed", "session", "Mobs killed", number(now.mobsKilled() - start.mobsKilled())));
-        rows.add(row("s_deaths", "session", "Deaths", number(now.deaths() - start.deaths())));
-        rows.add(row("s_jumps", "session", "Jumps", number(now.jumps() - start.jumps())));
+        rows.add(trow("s_play_time", "session", "Play time", now.playTicks() - start.playTicks()));
+        rows.add(drow("s_distance", "session", "Distance traveled", now.distanceCm() - start.distanceCm()));
+        rows.add(nrow("s_blocks_mined", "session", "Blocks mined", now.blocksMined() - start.blocksMined()));
+        rows.add(nrow("s_blocks_placed", "session", "Blocks placed", now.blocksPlaced() - start.blocksPlaced()));
+        rows.add(nrow("s_items_crafted", "session", "Items crafted", now.itemsCrafted() - start.itemsCrafted()));
+        rows.add(nrow("s_mobs_killed", "session", "Mobs killed", now.mobsKilled() - start.mobsKilled()));
+        rows.add(nrow("s_deaths", "session", "Deaths", now.deaths() - start.deaths()));
+        rows.add(nrow("s_jumps", "session", "Jumps", now.jumps() - start.jumps()));
+
+        // ---- Moments and achievements (real dates from the player's advancement progress) ----
+        Moments.addMoments(player, rows);
+        addMoreStats(stats, rows);
+        Moments.addAchievements(player, rows, rows.stream().mapToInt(String::length).sum() + rows.size() + 2500);
 
         // ---- Server leaders (only when more than one player is online) ----
         addLeaders(player, rows);
 
         return String.join("\n", rows);
+    }
+
+    // ------------------------------------------------------------------
+    // Every other custom statistic (including those added by other mods)
+    // ------------------------------------------------------------------
+
+    private static final java.util.Set<ResourceLocation> SHOWN_ELSEWHERE = java.util.Set.of(
+            Stats.MINECART_ONE_CM, Stats.BOAT_ONE_CM, Stats.PIG_ONE_CM, Stats.HORSE_ONE_CM, Stats.STRIDER_ONE_CM,
+            Stats.WALK_ONE_CM, Stats.SPRINT_ONE_CM, Stats.CROUCH_ONE_CM, Stats.WALK_ON_WATER_ONE_CM,
+            Stats.WALK_UNDER_WATER_ONE_CM, Stats.SWIM_ONE_CM, Stats.CLIMB_ONE_CM, Stats.FLY_ONE_CM,
+            Stats.AVIATE_ONE_CM, Stats.FALL_ONE_CM, Stats.PLAY_TIME, Stats.TOTAL_WORLD_TIME, Stats.SLEEP_IN_BED,
+            Stats.JUMP, Stats.MOB_KILLS, Stats.DEATHS, Stats.PLAYER_KILLS, Stats.DAMAGE_DEALT, Stats.DAMAGE_TAKEN,
+            Stats.RAID_WIN, Stats.TIME_SINCE_DEATH, Stats.ANIMALS_BRED, Stats.FISH_CAUGHT, Stats.OPEN_CHEST,
+            Stats.TRADED_WITH_VILLAGER, Stats.ENCHANT_ITEM, Stats.EAT_CAKE_SLICE, Stats.BELL_RING, Stats.POT_FLOWER
+    );
+
+    private static void addMoreStats(ServerStatsCounter stats, List<String> rows) {
+        int added = 0;
+        for (ResourceLocation key : BuiltInRegistries.CUSTOM_STAT) {
+            if (SHOWN_ELSEWHERE.contains(key) || added >= 60) {
+                continue;
+            }
+            long value = stats.getValue(Stats.CUSTOM, key);
+            if (value <= 0) {
+                continue;
+            }
+
+            String path = key.getPath();
+            String translated = net.minecraft.network.chat.Component
+                    .translatable("stat." + key.toString().replace(':', '.')).getString();
+            String label = translated.startsWith("stat.") ? prettify(path, key.getNamespace()) : translated;
+            String id = "x_" + key.toString().replace(':', '.');
+
+            if (path.endsWith("_one_cm")) {
+                rows.add(drow(id, "more", label, value));
+            } else if (path.contains("time") || path.startsWith("play_")) {
+                rows.add(trow(id, "more", label, value));
+            } else if (path.contains("damage")) {
+                rows.add(nrow(id, "more", label, value / 10));
+            } else {
+                rows.add(nrow(id, "more", label, value));
+            }
+            added++;
+        }
+    }
+
+    /** "inspect_hopper" from mod "foo" becomes "Inspect Hopper" (or "Foo: ..." for other mods). */
+    private static String prettify(String path, String namespace) {
+        StringBuilder out = new StringBuilder();
+        for (String word : path.split("[_/]")) {
+            if (!word.isEmpty()) {
+                out.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(' ');
+            }
+        }
+        return out.toString().trim();
     }
 
     // ------------------------------------------------------------------
@@ -404,10 +461,10 @@ public final class RecapBuilder {
                 || block == Blocks.ANCIENT_DEBRIS;
     }
 
-    private static String advancements(ServerPlayer player) {
+    private static String advancementsRow(ServerPlayer player) {
         MinecraftServer server = player.getServer();
         if (server == null) {
-            return "-";
+            return row("advancements", "world", "Advancements", "-");
         }
 
         PlayerAdvancements progress = player.getAdvancements();
@@ -426,7 +483,8 @@ public final class RecapBuilder {
             }
         }
 
-        return done + " / " + total;
+        return fullRow("advancements", "world", "Advancements", done + " / " + total, "",
+                done + "/" + total + ":f", "");
     }
 
     private static String itemKey(Item item) {
@@ -455,6 +513,38 @@ public final class RecapBuilder {
         long hours = totalMinutes / 60;
         long minutes = totalMinutes % 60;
         return hours > 0 ? hours + " h " + minutes + " min" : minutes + " min";
+    }
+
+    /** Stat row with a raw count, so the client can animate it and draw bars. */
+    private static String nrow(String id, String category, String label, long value) {
+        long safe = Math.max(0, value);
+        return fullRow(id, category, label, number(safe), "", safe + ":n", "");
+    }
+
+    /** Stat row with a raw distance in centimetres. */
+    private static String drow(String id, String category, String label, long centimeters) {
+        long safe = Math.max(0, centimeters);
+        return fullRow(id, category, label, distance(safe), "", safe + ":cm", "");
+    }
+
+    /** Stat row with a raw duration in ticks. */
+    private static String trow(String id, String category, String label, long ticks) {
+        long safe = Math.max(0, ticks);
+        return fullRow(id, category, label, duration(safe), "", safe + ":t", "");
+    }
+
+    /**
+     * id, category, label, value, icon, raw ("number:unit"), extra.
+     * Older clients only read the first five fields; the others are ignored.
+     */
+    static String fullRow(String id, String category, String label, String value,
+                          String icon, String raw, String extra) {
+        return id + "\t" + category + "\t" + clean(label) + "\t" + clean(value)
+                + "\t" + icon + "\t" + raw + "\t" + clean(extra);
+    }
+
+    private static String clean(String text) {
+        return text.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
     }
 
     private static String row(String id, String category, String label, String value) {

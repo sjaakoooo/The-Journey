@@ -23,13 +23,62 @@ public class JourneyConfig {
     /** Take a photo at big moments (first Crafting Table, entering the Nether, ...). */
     public boolean captureMilestones = true;
 
+    /**
+     * Keep milestone photos and moment clips after the End Credits so they can be viewed again
+     * (J key, Photos page). When off they are deleted as soon as the credits close.
+     */
+    public boolean keepPhotos = true;
+
     /** Play your own music (sounds/credits.ogg) during the credits, if the file exists. */
     public boolean customCreditsMusic = true;
 
     /** Average number of seconds between End screenshots. */
     public int shotIntervalSeconds = 20;
 
-    public JourneyTheme theme = JourneyTheme.WOOD;
+    public JourneyTheme theme = JourneyTheme.END_PORTAL;
+
+    /** How statistics and cards enter the screen. */
+    public enum RevealStyle {
+        CINEMATIC("Cinematic (varies per stat)"),
+        SLIDE("Slide up"),
+        FADE("Fade"),
+        POP("Pop");
+
+        private final String label;
+
+        RevealStyle(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    // ---- Recap experience: animations ----
+    public boolean animations = true;
+    /** Percent: 50 = half speed, 100 = normal, 200 = twice as fast. */
+    public int animationSpeed = 100;
+    public RevealStyle revealStyle = RevealStyle.CINEMATIC;
+    public boolean particles = true;
+
+    // ---- Recap experience: audio ----
+    public boolean soundEffects = true;
+    /** 0 - 100. */
+    public int soundVolume = 70;
+    /** Looping music in the standalone recap screen (the End Credits have their own music). */
+    public boolean backgroundMusic = false;
+
+    // ---- Recap experience: content ----
+    /** Hide statistics that are still zero. */
+    public boolean hideEmptyStats = true;
+    /** Record a few seconds of frames at big moments (first death, Wither, Ender Dragon). */
+    public boolean captureClips = true;
 
     public boolean showSession = true;
     public boolean showHighlights = true;
@@ -127,6 +176,28 @@ public class JourneyConfig {
         };
     }
 
+    /** Repairs values that are missing or out of range (older or hand-edited files). */
+    private void sanitize() {
+        if (theme == null) {
+            theme = JourneyTheme.END_PORTAL;
+        }
+        if (revealStyle == null) {
+            revealStyle = RevealStyle.CINEMATIC;
+        }
+        animationSpeed = Math.max(50, Math.min(200, animationSpeed));
+        soundVolume = Math.max(0, Math.min(100, soundVolume));
+        shotIntervalSeconds = Math.max(5, Math.min(60, shotIntervalSeconds));
+    }
+
+    /** Saves without ever throwing: used for changes made while the recap is on screen. */
+    public static void saveQuietly() {
+        try {
+            save();
+        } catch (RuntimeException ignored) {
+            // The setting stays active for this session.
+        }
+    }
+
     public static JourneyConfig get() {
         return instance;
     }
@@ -139,6 +210,7 @@ public class JourneyConfig {
 
                 if (loaded != null) {
                     instance = loaded;
+                    instance.sanitize();
                 }
             }
         } catch (Exception exception) {
